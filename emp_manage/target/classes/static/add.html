@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>사원 추가</title>
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script type="text/javascript">
+$(document).ready(()=>{
+	//add 데이터 전송
+	$("#add").on("click", ()=>{
+		let ename = $("#ename").val().toUpperCase();
+		if(($("#empno").val()).length<4){
+			alert("사번은 4자 입니다.")
+			return false;
+		}
+		const param = {
+			empno : $("#empno").val(),
+			ename : ename,
+			job : $("#job").val(),
+			mgr : $("#mgr").val(),
+			hiredate : $("#hiredate").val(),
+			sal : $("#sal").val(),
+			comm : $("#comm").val(),
+			deptno : $("#deptno").val(),
+		}
+		console.log(param);
+		$.ajax({
+			url: '/emp/add',
+			method: 'post',
+			data: param,
+			}).done(()=>{
+				location.href = "/search.html";
+			}).fail((response)=>console.log(response));
+	});
+	
+	//select 처리
+	$("#selectJob").on("change", function(){
+		let jobOption = $("#selectJob option:selected").val();
+		if(jobOption !="0"){
+			$("#job").val(jobOption).attr("disabled", "true");
+		}
+		else{
+			$("#job").val("").removeAttr("disabled");
+		}
+	});
+	
+	$("#selectDeptno").on("change", function(){
+		let deptnoOption = $("#selectDeptno option:selected").val();
+		if(deptnoOption !="0"){
+			$("#deptno").val(deptnoOption).attr("disabled", "true");
+		}
+		else{
+			$("#deptno").val("").removeAttr("disabled");
+		}
+	});
+	
+	$("#selectMgr").on("change", function(){
+		let mgrOption = $("#selectMgr option:selected").val();
+		if(mgrOption !="0"){
+			$("#mgr").val(mgrOption).attr("disabled", "true");
+		}
+		else{
+			$("#mgr").val("").removeAttr("disabled");
+		}
+	});
+	
+	//취소
+	$("#reset").on("click", function(){
+		location.href = "/search.html";
+	});
+	
+});
+</script>
+</head>
+<body>
+	<header>
+		<h1 style="text-align: center;">사원 추가</h1>
+		<hr>
+	</header>
+	<main>
+		<form id="add_form">
+			<div class="form-group">
+				<label for="empno">사번</label> <input type="text"
+					class="form-control" id="empno" name="empno">
+			</div>
+			<div class="form-group">
+				<label for="ename">이름</label> <input type="text"
+					class="form-control" id="ename" name="ename">
+			</div>
+			<div class="form-group">
+				<label for="job">직무</label> 
+				<input id="job" type="text" class="form-control" name="job"> 
+				<select id="selectJob">
+					<option value="0" selected="selected">직접 입력</option>
+					<option value="CLERK">CLERK</option>
+					<option value="SALESMAN">SALESMAN</option>
+					<option value="PRESIDENT">PRESIDENT</option>
+					<option value="MANAGER">MANAGER</option>
+					<option value="ANALYST">ANALYST</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="deptno">부서 번호</label> <input id="deptno" type="text"
+					class="form-control" name="deptno"> <select
+					id="selectDeptno">
+					<option value="0" selected="selected">직접 입력</option>
+					<option value=10>10</option>
+					<option value=20>20</option>
+					<option value=30>30</option>
+					<option value=40>40</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="mgr">관리자 번호</label> <input type="text" name="mgr"
+					id="mgr" class="form-control"> 
+				<select id="selectMgr">
+					<option value ="0" selected="selected">직접 입력</option>
+					<option value="7566">JONES</option>
+					<option value="7698">BLAKE</option>
+					<option value="7782">CLARK</option>
+				</select> <span class="helper-text" id="Email_msg"></span>
+			</div>
+			<div class="form-group">
+				<label for="hiredate">고용일자</label><br> <input id="hiredate"
+					type="date" name="hiredate">
+			</div>
+			<div class="form-group">
+				<label for="sal">연봉</label> <input type="text" class="form-control"
+					id="sal" name="sal" placeholder="(단위 : 만원)">
+			</div>
+			<div class="form-group">
+				<label for="comm">보너스</label> <input type="text"
+					class="form-control" id="comm" name="comm" placeholder="(단위 : 만원)">
+			</div>
+			<div class="form-group" style="text-align: center;">
+				<button type="button" id="add" class="btn btn-success">추가</button>
+				<button type="button" id="reset" class="btn btn-danger">취소</button>
+			</div>
+		</form>
+	</main>
+</body>
+</html>

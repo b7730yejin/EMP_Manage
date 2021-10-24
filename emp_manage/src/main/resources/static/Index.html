@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script>
+	
+	$(document).ready(()=>{
+		$("#login").on("click", ()=>{
+			const params = {
+				ename: $("#ename").val().toUpperCase(),
+				empno : $("#empno").val()
+			};
+			$.ajax({
+				url: "/emp/login",
+				method: "post",
+				data: params,		
+			}).done(()=>{
+				localStorage.setItem("isLoginState", "true");
+				localStorage.setItem("loginId", $("#ename").val());
+				location.href="/search.html";
+			}).fail((response)=>{
+				Swal.fire("잘못된 입력", "접근권한이 없습니다.", "error");
+				console.log(response);
+			});
+		});
+	});
+</script>
+</head>
+<body>
+	<form id="login_form" >
+		<div class="form-group">
+			<label for="ename">이름</label>
+			<input id="ename" type="text" name="ename" class="form-control">
+			<span class="helper-text" id="username_msg"></span>
+		</div>
+		<div class="form-group">
+			<label for="empno">사번</label>
+			<input id="empno" type="password" name="empno" class="form-control">
+			<span class="helper-text" id="password_msg"></span>
+		</div>
+		<button type="button" class="btn btn-success" id="login">로그인</button>
+	</form>
+</body>
+</html>

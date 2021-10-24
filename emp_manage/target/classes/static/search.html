@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>사원 관리</title>
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Icons"
+	rel="stylesheet">
+<script>
+	// 서버 응답을 저장할 변수
+	let page = null;
+	
+	//empno가 4자리 숫자인지 검사
+	const empnoCheck =(empno)=>{
+		const pattern = /^[0-9]{4}$/;
+		return pattern.test(empno);
+	}
+	//ename이 영문자인지 검사
+	const enameCheck =(ename)=>{
+		const pattern = /[a-zA-Z]/;
+		return pattern.test(ename);
+	}
+	
+	const printList = ()=>{
+		const $list = $("#list");
+		// 서버가 보낸 board들은 page.content에 저장되어 있다
+		for(e of page.content) {
+			const $tr = $("<tr>").appendTo($list);
+			$("<td>").text(e.empno).appendTo($tr);
+			const $td = $("<td>").appendTo($tr);
+			$("<a>").attr("href", "/update.html?empno="+e.empno).text(e.ename).appendTo($td);
+			$("<td>").text(e.job).appendTo($tr);
+			$("<td>").text(e.mgr).appendTo($tr);
+			$("<td>").text(e.hiredate).appendTo($tr);
+			$("<td>").text(e.sal).appendTo($tr);
+			$("<td>").text(e.comm).appendTo($tr);
+			$("<td>").text(e.deptno).appendTo($tr);
+		}
+	};
+	
+	const getPagination = () => {
+		// 한번에 다섯개의 페이지씩
+		const blockSize = 5;
+		
+		// 서버 응답에 현재 페이지가 포함되어 있지 않다....재계산하자
+		let pageno = location.search.substr(8);
+		if(pageno=="")
+			pageno=1;
+		
+		// 0번 블록 : 1~5 page, 1번 블록 : 6~10 page
+		const blockNo = Math.floor((pageno-1)/blockSize);
+		const prev = blockNo * blockSize;
+		const first = prev + 1;
+		let last = first + blockSize - 1;
+		let  next = last + 1;
+		
+		// 페이지의 개수는 page.totalPages에 저장되어 있다
+		if(last>=page.totalPages) {
+			last = page.totalPages;
+			next = 0;
+		}
+		return {pageno, prev, next, first, last};
+		
+	};
+	
+	//페이지네이션
+	const printPagination = ({pageno, prev, next, first, last}) => {
+		const $pagination = $("ul.pagination");
+		const url = "/search.html?pageno="
+				
+		// 이전으로 
+		if(prev>0) {
+			const $li = $("<li>").appendTo($pagination);
+			$("<a>").attr("href", url+prev).text("PREV").appendTo($li);
+		}
+		// 다음으로
+		if(next>0) {
+			const $li = $("<li>").appendTo($pagination);
+			$("<a>").attr("href", url+next).text("NXET").appendTo($li);
+		}
+		
+		for(let idx=first; idx<=last; idx++) {
+			const $li = $("<li>").appendTo($pagination);
+			$("<a>").attr("href", url+idx).text(idx).appendTo($li);
+			if(idx==pageno)
+				$li.attr("class", "active");
+		}
+	}
+	
+	const printEmpSearchResult = (result)=>{
+		$("#emp_result").css("display", "block");
+		$("#emp_list").css("display", "none");	
+		
+		const $result = $("#result");
+		for(e of result) {
+			const $tr = $("<tr>").appendTo($result);
+			$("<td>").text(e.empno).appendTo($tr);
+			const $td = $("<td>").appendTo($tr);
+			$("<a>").attr("href", "/update.html?empno="+e.empno).text(e.ename).appendTo($td);
+			$("<td>").text(e.job).appendTo($tr);
+			$("<td>").text(e.mgr).appendTo($tr);
+			$("<td>").text(e.hiredate).appendTo($tr);
+			$("<td>").text(e.sal).appendTo($tr);
+			$("<td>").text(e.comm).appendTo($tr);
+			$("<td>").text(e.deptno).appendTo($tr);
+		}
+	}
+	const printDeptSearchResult = (result)=>{
+		$("#dept_result").css("display", "block");
+		
+		const $result = $("#result2");
+		for(e of result) {
+			const $tr = $("<tr>").appendTo($result);
+			$("<td>").text(e.empno).appendTo($tr);
+			const $td = $("<td>").appendTo($tr);
+			$("<a>").attr("href", "/update.html?empno="+e.empno).text(e.ename).appendTo($td);
+			$("<td>").text(e.job).appendTo($tr);
+			$("<td>").text(e.mgr).appendTo($tr);
+			$("<td>").text(e.hiredate).appendTo($tr);
+			$("<td>").text(e.sal).appendTo($tr);
+			$("<td>").text(e.comm).appendTo($tr);
+			$("<td>").text(e.deptno).appendTo($tr);
+		}
+	}
+	
+	$(document).ready(()=>{
+		const loginId= localStorage.getItem("loginId");
+		$("#ename").val(loginId);
+		
+		let pageno = location.search.substr(8);
+		if(pageno=="")
+			pageno=1;
+		
+		$.ajax("/emp/list?pageno="+pageno).done(result=>{
+			page=result;
+			printList();
+			printPagination(getPagination());
+		});
+		
+		//로그아웃
+		$("#logout").on("click", ()=>{
+			$.ajax({
+				url: '/emp/logout',
+				method: 'post'
+			}).done(()=>{
+				localStorage.removeItem("loginId");
+				location.href = "/";
+			}).fail((response)=>console.log(response));
+		});
+		
+		//사원검색
+		$("#emp_summit").on("click", ()=>{
+			$("#result").empty();
+			let option = $("#emp_search_option option:selected").val();
+			if($("#emp").val()==null || $("#emp").val()==""){
+				alert("검색값을 입력하세요");
+				return false;
+			}
+			if(option==1){
+				let ename =  $("#emp").val().toUpperCase();
+				if(enameCheck(ename)==false){
+					alert("잘못된 검색 값입니다.")
+					return false;
+				}
+				
+				$.ajax({
+					url: '/emp/ename_search',
+					method: 'post',
+					data: {ename: ename} 
+				}).done((result)=>{
+					printEmpSearchResult(result);
+				}).fail((response)=>console.log(response));
+			}
+			else{
+				let empno = $("#emp").val();
+				if(empnoCheck(empno)==false){
+					alert("잘못된 검색 값입니다.")
+					return false;
+				}
+				$.ajax({
+					url: '/emp/empno_search',
+					method: 'post',
+					data: {empno: empno} 
+				}).done((result)=>{
+					printEmpSearchResult(result);
+				}).fail((response)=>console.log(response));
+			}
+
+		});
+		
+		//부서 검색
+		$("#dept_summit").on("click", ()=>{
+			$("#result2").empty();
+			let option = $("#dept_search_option option:selected").val();
+			
+			if($("#dept").val()==null || $("#dept").val()==""){
+				alert("검색값을 입력하세요");
+				return false;
+			}
+			if(option==1){
+				let dname =  $("#dept").val().toUpperCase();
+				$.ajax({
+					url: '/dept/search_dname',
+					method: 'post',
+					data: {dname: dname} 
+				}).done((result)=>{
+					printDeptSearchResult(result);
+				}).fail((response)=>console.log(response));
+			}
+			else{
+				$.ajax({
+					url: '/dept/search_dno',
+					method: 'post',
+					data: {deptno: $("#dept").val()} 
+				}).done((result)=>{
+					printDeptSearchResult(result);
+				}).fail((response)=>console.log(response));
+			}
+
+		});
+	});
+</script>
+</head>
+<body>
+	<header>
+		<table id="header_layout" style="width: 100%">
+			<tr>
+				<td><span class="material-icons">&#xe853;</span> <input
+					type="text" id="ename" disabled="disabled">
+					<button type="button" id="logout" class="btn btn-danger">로그아웃</button></td>
+				<td><span class="material-icons">&#xe148;</span> <a href="/add.html">사원추가</a>
+				</td>
+			</tr>
+		</table>
+	</header>
+	<hr>
+	<main>
+		<form id="=emp_search">
+			<div id="wrap1">
+				<h4>사원 조회</h4>
+				<select id="emp_search_option">
+					<option value="1">이름</option>
+					<option value="2">사번</option>
+				</select> <input type="text" id="emp">
+				<button type="button" id="emp_summit" class="btn btn-info">조회</button>
+			</div>
+		</form>
+		<div id="emp_list">
+			<table id="emp_table" class="table table-hover">
+				<tr>
+					<th>사번</th>
+					<th>이름</th>
+					<th>직무</th>
+					<th>관리번호</th>
+					<th>고용일</th>
+					<th>연봉</th>
+					<th>보너스</th>
+					<th>부서번호</th>
+				</tr>
+				<tbody id="list">
+				</tbody>
+			</table>
+			<div id="pagination" style="text-align: center;">
+				<ul class="pagination">
+				</ul>
+			</div>
+		</div>
+		<div id="emp_result" style="display: none">
+			<table id="emp_result_table" class="table table-hover">
+				<tr>
+					<th>사번</th>
+					<th>이름</th>
+					<th>직무</th>
+					<th>관리번호</th>
+					<th>고용일</th>
+					<th>연봉</th>
+					<th>보너스</th>
+					<th>부서번호</th>
+				</tr>
+				<tbody id="result">
+				</tbody>
+			</table>
+		</div>
+		<form id="=dept_search">
+			<div id="wrap2">
+				<h4>부서 조회</h4>
+				<select id="dept_search_option">
+					<option value="1">부서 이름</option>
+					<option value="2">부서 번호</option>
+				</select> 
+				<input type="text" id="dept">
+				<button type="button" id="dept_summit" class="btn btn-info">조회</button>
+			</div>
+		</form>
+		<div id="dept_result" style="display: none">
+			<table id="dept_result_table" class="table table-hover">
+				<tr>
+					<th>사번</th>
+					<th>이름</th>
+					<th>직무</th>
+					<th>관리번호</th>
+					<th>고용일</th>
+					<th>연봉</th>
+					<th>보너스</th>
+					<th>부서번호</th>
+				</tr>
+				<tbody id="result2">
+				</tbody>
+			</table>
+		</div>
+	</main>
+
+</body>
+</html>
